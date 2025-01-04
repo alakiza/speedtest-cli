@@ -697,7 +697,7 @@ def build_user_agent():
     return user_agent
 
 
-def build_request(url, data=None, headers=None, bump="0", secure=False):
+def build_request(url, data=None, headers=None, bump="0", secure=False, servers=None):
     """Build a urllib2 request object
 
     This function automatically adds a User-Agent header to all requests
@@ -717,7 +717,10 @@ def build_request(url, data=None, headers=None, bump="0", secure=False):
         delim = "?"
 
     # WHO YOU GONNA CALL? CACHE BUSTERS!
-    final_url = f"{schemed_url}{delim}x={int(timeit.time.time() * 1000)}.{bump}"
+    if not servers:
+        final_url = f"{schemed_url}{delim}x={int(timeit.time.time() * 1000)}.{bump}"
+    else:
+        final_url = f"{schemed_url}{delim}x={int(timeit.time.time() * 1000)}.{bump}{delim}server_ids[]={servers[0]}"
 
     headers.update(
         {
@@ -1316,6 +1319,7 @@ class Speedtest:
                     f"{url}?threads={self.config['threads']['download']}",
                     headers=headers,
                     secure=self._secure,
+                    servers=servers,
                 )
                 uh, e = catch_request(request, opener=self._opener)
                 if e:
