@@ -1237,21 +1237,40 @@ class Speedtest:
 
         ratio = int(upload["ratio"])
         upload_max = int(upload["maxchunkcount"])
-        up_sizes = [32768, 65536, 131072, 262144, 524288, 1048576, 7340032]
+# Default
+#        up_sizes = [32768, 65536, 131072, 262144, 524288, 1048576, 7340032]
+#        up_sizes = [32768, 65536, 131072, 262144, 26214400, 1048576, 7340032]
+        up_sizes = [52428800, 104857600, 104857600, 104857600, 104857600, 104857600, 104857600]
+#        up_sizes = [32768, 65536, 131072, 262144, 524288, 1048576, 2097152, 2097152, 2097152]
+#        up_sizes = [32768, 65536, 131072, 262144, 524288, 1048576, 16777216]
+#        up_sizes = [32768, 65536, 131072, 262144, 524288, 1048576, 33554432]
+# 25ms
+# single 240 Mbit
+# multiple 200 Mbit
+#        up_sizes = [262144, 524288, 1048576, 8388608, 16777216, 33554432, 67108864]
+
+# single 200 Mbit
+# multiple 240 Mbit
+#        up_sizes = [131072, 262144, 524288, 1048576, 8388608, 16777216, 33554432]
+
+#        up_sizes = [32768, 65536, 131072, 262144, 524288, 1048576, 4194304, 8388608, 16777216]
         sizes = {
             "upload": up_sizes[ratio - 1 :],
-            "download": [350, 500, 750, 1000, 1500, 2000, 2500, 3000, 3500, 4000],
+            "download": [500, 750, 1000, 1500, 1500, 1500]
         }
+
+        sizes['download'] = [52428800, 104857600, 209715200, 209715200]
 
         size_count = len(sizes["upload"])
 
         upload_count = int(math.ceil(upload_max / size_count))
 
-        counts = {"upload": upload_count, "download": int(download["threadsperurl"])}
+#        counts = {"upload": upload_count, "download": int(download["threadsperurl"])}
+        counts = {"upload": upload_count, "download": int(1)}
 
         threads = {
             "upload": int(upload["threads"]),
-            "download": int(server_config["threadcount"]) * 2,
+            "download": int(server_config["threadcount"]),
         }
 
         length = {
@@ -1544,8 +1563,8 @@ class Speedtest:
         for size in self.config["sizes"]["download"]:
             for _ in range(0, self.config["counts"]["download"]):
                 urls.append(
-                    "%s/random%sx%s.jpg"
-                    % (os.path.dirname(self.best["url"]), size, size),
+                    "%s/download?size=%d"
+                    % (os.path.dirname(self.best["url"]), size),
                 )
 
         request_count = len(urls)
@@ -1554,6 +1573,7 @@ class Speedtest:
             requests.append(build_request(url, bump=i, secure=self._secure))
 
         max_threads = threads or self.config["threads"]["download"]
+#        print(max_threads)
         in_flight = {"threads": 0}
 
         def producer(q, requests, request_count):
@@ -1601,10 +1621,11 @@ class Speedtest:
             cons_thread.join(timeout=0.001)
 
         stop = timeit.default_timer()
+#        print(finished)
         self.results.bytes_received = sum(finished)
         self.results.download = (self.results.bytes_received / (stop - start)) * 8.0
         if self.results.download > 100000:
-            self.config["threads"]["upload"] = 8
+            self.config["threads"]["upload"] = 4
         return self.results.download
 
     def upload(self, callback=do_nothing, pre_allocate=True, threads=None):
@@ -1650,6 +1671,7 @@ class Speedtest:
 
         max_threads = threads or self.config["threads"]["upload"]
         in_flight = {"threads": 0}
+#        print(max_threads)
 
         def producer(q, requests, request_count):
             for i, request in enumerate(requests[:request_count]):
@@ -1697,6 +1719,7 @@ class Speedtest:
             cons_thread.join(timeout=0.1)
 
         stop = timeit.default_timer()
+#        print(finished)
         self.results.bytes_sent = sum(finished)
         self.results.upload = (self.results.bytes_sent / (stop - start)) * 8.0
         return self.results.upload
