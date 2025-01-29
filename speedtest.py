@@ -1561,6 +1561,8 @@ class Speedtest:
         """
         urls = []
         for size in self.config["sizes"]["download"]:
+            if threads or (self.config["threads"]["download"] and self.config["threads"]["download"] > 1):
+                size = size // 2
             for _ in range(0, self.config["counts"]["download"]):
                 urls.append(
                     "%s/download?size=%d"
